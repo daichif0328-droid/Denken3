@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="電験三種">
+<meta name="theme-color" content="#0a0c12">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>電験三種 学習アプリ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c8a84b;
+    --gold-light: #e8c86a;
+    --gold-dim: rgba(200,168,75,0.15);
+    --bg: #0a0c12;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(200,168,75,0.2);
+    --text: #e8e0d0;
+    --muted: #7a7060;
+    --green: #4ade80;
+    --red: #f87171;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%; height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', Georgia, serif;
+    overflow: hidden;
+    position: fixed; width: 100%;
+  }
+
+/* Layout */
+#app { display: flex; flex-direction: column; height: 100dvh; }
+#header {
+padding: calc(var(–safe-top) + 12px) 20px 12px;
+background: rgba(10,12,18,0.95);
+border-bottom: 1px solid var(–border);
+backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
+display: flex; align-items: center; gap: 12px;
+flex-shrink: 0;
+}
+#header-back {
+width: 36px; height: 36px;
+border: 1px solid var(–border);
+border-radius: 50%;
+background: var(–gold-dim);
+color: var(–gold);
+font-size: 18px;
+display: none; align-items: center; justify-content: center;
+cursor: pointer;
+}
+#header-title { font-size: 18px; font-weight: 700; color: var(–gold); letter-spacing: 0.05em; flex: 1; }
+#header-sub { font-size: 12px; color: var(–muted); }
+
+#content {
+flex: 1; overflow-y: auto; overflow-x: hidden;
+-webkit-overflow-scrolling: touch;
+padding: 20px 16px calc(var(–safe-bottom) + 80px);
+}
+
+/* Bottom Nav */
+#nav {
+position: fixed; bottom: 0; left: 0; right: 0;
+padding: 8px 0 calc(var(–safe-bottom) + 8px);
+background: rgba(10,12,18,0.97);
+border-top: 1px solid var(–border);
+display: flex;
+backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
+z-index: 100;
+}
+.nav-item {
+flex: 1; display: flex; flex-direction: column; align-items: center;
+gap: 3px; cursor: pointer; padding: 6px 0;
+border: none; background: none; color: var(–muted);
+font-family: inherit; font-size: 10px; letter-spacing: 0.03em;
+transition: color 0.2s;
+}
+.nav-item.active { color: var(–gold); }
+.nav-icon { font-size: 22px; line-height: 1; }
+
+/* Cards */
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 20px;
+padding: 20px;
+margin-bottom: 16px;
+}
+.card-gold {
+background: var(–gold-dim);
+border-color: rgba(200,168,75,0.4);
+}
+
+/* Buttons */
+.btn-primary {
+display: block; width: 100%;
+padding: 16px;
+background: var(–gold);
+color: #0a0c12;
+border: none; border-radius: 14px;
+font-family: inherit; font-size: 16px; font-weight: 700;
+letter-spacing: 0.05em;
+cursor: pointer;
+-webkit-appearance: none;
+margin-top: 12px;
+}
+.btn-secondary {
+display: block; width: 100%;
+padding: 14px;
+background: var(–gold-dim);
+color: var(–gold);
+border: 1px solid var(–border); border-radius: 14px;
+font-family: inherit; font-size: 15px; font-weight: 600;
+cursor: pointer;
+-webkit-appearance: none;
+margin-top: 10px;
+}
+.btn-chip {
+padding: 8px 18px;
+border: 1px solid var(–border);
+border-radius: 999px;
+background: transparent;
+color: var(–muted);
+font-family: inherit; font-size: 14px;
+cursor: pointer; margin: 4px;
+-webkit-appearance: none;
+transition: all 0.2s;
+}
+.btn-chip.active {
+background: var(–gold-dim);
+border-color: var(–gold);
+color: var(–gold);
+}
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.stat-box {
+background: var(–gold-dim);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 16px 10px;
+text-align: center;
+}
+.stat-num { font-size: 28px; font-weight: 700; color: var(–gold); display: block; }
+.stat-label { font-size: 11px; color: var(–muted); margin-top: 2px; }
+
+/* Progress bar */
+.prog-wrap { background: rgba(255,255,255,0.08); border-radius: 999px; height: 5px; }
+.prog-bar { background: linear-gradient(90deg, var(–gold), var(–gold-light)); border-radius: 999px; height: 100%; transition: width 0.4s; }
+
+/* Section title */
+.sec-title { font-size: 18px; font-weight: 700; color: var(–gold); margin-bottom: 16px; }
+.tag {
+display: inline-block;
+font-size: 11px; color: var(–gold);
+background: var(–gold-dim);
+border-radius: 999px;
+padding: 3px 10px;
+margin-bottom: 12px;
+}
+
+/* Quiz */
+.q-text { font-size: 17px; font-weight: 600; line-height: 1.7; margin-bottom: 20px; }
+.option-btn {
+display: block; width: 100%;
+padding: 14px 16px;
+text-align: left;
+border: 1px solid rgba(255,255,255,0.1);
+border-radius: 14px;
+background: var(–surface);
+color: var(–text);
+font-family: inherit; font-size: 15px;
+cursor: pointer; margin-bottom: 10px;
+-webkit-appearance: none;
+transition: all 0.2s;
+line-height: 1.5;
+}
+.option-btn.correct { background: rgba(74,222,128,0.15); border-color: var(–green); color: #86efac; }
+.option-btn.wrong { background: rgba(248,113,113,0.15); border-color: var(–red); color: #fca5a5; }
+.option-label { color: var(–gold); font-weight: 700; margin-right: 8px; }
+
+.explanation {
+background: rgba(74,222,128,0.08);
+border: 1px solid rgba(74,222,128,0.25);
+border-radius: 14px;
+padding: 16px;
+margin: 10px 0;
+font-size: 14px; line-height: 1.8;
+color: #bbf7d0;
+}
+.explanation-title { font-size: 12px; color: var(–green); font-weight: 700; margin-bottom: 6px; }
+
+/* Flash card */
+.flip-container { perspective: 1000px; margin-bottom: 20px; }
+.flip-inner {
+position: relative; width: 100%; min-height: 240px;
+transform-style: preserve-3d;
+transition: transform 0.6s ease;
+}
+.flip-inner.flipped { transform: rotateY(180deg); }
+.flip-face {
+position: absolute; top: 0; left: 0;
+width: 100%; min-height: 240px;
+backface-visibility: hidden;
+-webkit-backface-visibility: hidden;
+border-radius: 20px;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+padding: 32px 20px; text-align: center;
+}
+.flip-front {
+background: var(–surface);
+border: 1px solid rgba(255,255,255,0.1);
+}
+.flip-back {
+background: var(–gold-dim);
+border: 1px solid rgba(200,168,75,0.4);
+transform: rotateY(180deg);
+}
+.flip-label { font-size: 11px; letter-spacing: 0.1em; color: var(–gold); margin-bottom: 16px; text-transform: uppercase; }
+.flip-word { font-size: 22px; font-weight: 700; line-height: 1.4; }
+.flip-def { font-size: 16px; line-height: 1.8; white-space: pre-line; }
+.flip-hint { font-size: 12px; color: var(–muted); margin-top: 20px; }
+
+.flash-nav { display: flex; gap: 12px; }
+.flash-nav button { flex: 1; }
+
+/* Result */
+.result-emoji { font-size: 64px; text-align: center; margin-bottom: 20px; }
+.result-score { font-size: 48px; font-weight: 700; color: var(–gold); text-align: center; }
+.result-label { text-align: center; color: var(–muted); font-size: 14px; margin: 8px 0 24px; }
+
+/* Subject cards on home */
+.subj-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+.subj-card {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: 16px; padding: 18px 14px;
+cursor: pointer; text-align: center;
+transition: all 0.2s;
+-webkit-tap-highlight-color: transparent;
+}
+.subj-card:active { transform: scale(0.97); background: var(–gold-dim); }
+.subj-icon { font-size: 28px; margin-bottom: 8px; }
+.subj-name { font-size: 15px; font-weight: 700; color: var(–gold); }
+.subj-count { font-size: 11px; color: var(–muted); margin-top: 4px; }
+
+/* Progress page */
+.hist-row {
+display: flex; justify-content: space-between; align-items: center;
+padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+font-size: 14px;
+}
+.hist-info { color: var(–muted); font-size: 13px; }
+.hist-score { font-weight: 700; }
+.hist-score.good { color: var(–green); }
+.hist-score.ok { color: var(–gold); }
+.hist-score.bad { color: var(–red); }
+
+/* Animations */
+@keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.3s ease both; }
+
+/* Page visibility */
+.page { display: none; }
+.page.active { display: block; }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="header-back" onclick="goBack()">‹</div>
+    <div>
+      <div id="header-title">⚡ 電験三種</div>
+      <div id="header-sub">理論・電力・機械・法規</div>
+    </div>
+  </div>
+
+  <div id="content">
+
+```
+<!-- HOME -->
+<div id="page-home" class="page active fade-in">
+  <div class="stats-grid">
+    <div class="stat-box">
+      <span class="stat-num" id="stat-total">0</span>
+      <div class="stat-label">解答数</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" id="stat-acc">0%</span>
+      <div class="stat-label">正答率</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" id="stat-sess">0</span>
+      <div class="stat-label">セッション</div>
+    </div>
+  </div>
+
+  <div class="sec-title">科目を選ぶ</div>
+  <div class="subj-grid" style="margin-bottom:20px">
+    <div class="subj-card" onclick="setSubject('理論'); showPage('quiz-setup')">
+      <div class="subj-icon">⚡</div>
+      <div class="subj-name">理論</div>
+      <div class="subj-count">4問 / 8カード</div>
+    </div>
+    <div class="subj-card" onclick="setSubject('電力'); showPage('quiz-setup')">
+      <div class="subj-icon">🔌</div>
+      <div class="subj-name">電力</div>
+      <div class="subj-count">2問 / 5カード</div>
+    </div>
+    <div class="subj-card" onclick="setSubject('機械'); showPage('quiz-setup')">
+      <div class="subj-icon">⚙️</div>
+      <div class="subj-name">機械</div>
+      <div class="subj-count">2問 / 5カード</div>
+    </div>
+    <div class="subj-card" onclick="setSubject('法規'); showPage('quiz-setup')">
+      <div class="subj-icon">📋</div>
+      <div class="subj-name">法規</div>
+      <div class="subj-count">2問 / 6カード</div>
+    </div>
+  </div>
+
+  <div class="card card-gold" onclick="setSubject('全科目'); showPage('quiz-setup')" style="cursor:pointer;text-align:center">
+    <div style="font-size:24px;margin-bottom:6px">🎯</div>
+    <div style="font-weight:700;color:var(--gold);font-size:16px">全科目まとめて挑戦</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">全10問をランダムに出題</div>
+  </div>
+</div>
+
+<!-- QUIZ SETUP -->
+<div id="page-quiz-setup" class="page fade-in">
+  <div class="sec-title" id="quiz-setup-title">過去問クイズ</div>
+  <div class="card">
+    <div style="font-size:14px;color:var(--muted);margin-bottom:16px">学習モードを選択してください</div>
+    <button class="btn-primary" onclick="startQuiz()">📝 クイズ開始</button>
+    <button class="btn-secondary" onclick="startFlash()">🃏 フラッシュカード</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="page-quiz" class="page fade-in">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span id="quiz-progress-label" style="font-size:13px;color:var(--muted)"></span>
+    <span id="quiz-subject-tag" class="tag"></span>
+  </div>
+  <div class="prog-wrap" style="margin-bottom:20px">
+    <div class="prog-bar" id="quiz-prog-bar" style="width:0%"></div>
+  </div>
+  <div class="card">
+    <div class="q-text" id="quiz-question"></div>
+    <div id="quiz-options"></div>
+    <div id="quiz-explanation" style="display:none" class="explanation">
+      <div class="explanation-title">💡 解説</div>
+      <div id="quiz-explanation-text"></div>
+    </div>
+    <button class="btn-primary" id="quiz-next-btn" style="display:none" onclick="nextQuestion()">次の問題 →</button>
+  </div>
+</div>
+
+<!-- QUIZ RESULT -->
+<div id="page-quiz-result" class="page fade-in">
+  <div class="card" style="text-align:center;padding:32px 20px">
+    <div class="result-emoji" id="result-emoji"></div>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-label" id="result-label"></div>
+    <div id="result-pct" style="font-size:52px;font-weight:700;color:var(--gold-light);margin-bottom:20px"></div>
+    <button class="btn-primary" onclick="startQuiz()">もう一度</button>
+    <button class="btn-secondary" onclick="showPage('home')">ホームへ</button>
+  </div>
+</div>
+
+<!-- FLASH -->
+<div id="page-flash" class="page fade-in">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span id="flash-progress-label" style="font-size:13px;color:var(--muted)"></span>
+    <span style="font-size:12px;color:var(--muted)">タップで裏返す</span>
+  </div>
+  <div class="prog-wrap" style="margin-bottom:20px">
+    <div class="prog-bar" id="flash-prog-bar" style="width:0%"></div>
+  </div>
+  <div class="flip-container" onclick="flipCard()">
+    <div class="flip-inner" id="flip-inner">
+      <div class="flip-face flip-front">
+        <div class="flip-label">用語</div>
+        <div class="flip-word" id="flash-front"></div>
+        <div class="flip-hint">タップして解説を見る</div>
+      </div>
+      <div class="flip-face flip-back">
+        <div class="flip-label">解説</div>
+        <div class="flip-def" id="flash-back"></div>
+      </div>
+    </div>
+  </div>
+  <div class="flash-nav">
+    <button class="btn-secondary" onclick="prevCard()" style="margin-top:0">← 前へ</button>
+    <button class="btn-primary" onclick="nextCard()" style="margin-top:0">次へ →</button>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div id="page-progress" class="page fade-in">
+  <div class="sec-title">学習進捗</div>
+  <div class="stats-grid" style="margin-bottom:20px">
+    <div class="stat-box">
+      <span class="stat-num" id="prog-total">0</span>
+      <div class="stat-label">解答数</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" id="prog-correct">0</span>
+      <div class="stat-label">正解数</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num" id="prog-acc">0%</span>
+      <div class="stat-label">正答率</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="font-size:16px">科目別進捗</div>
+    <div id="subj-progress"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="font-size:16px">学習履歴</div>
+    <div id="history-list"><div style="color:var(--muted);font-size:14px">まだ記録がありません</div></div>
+  </div>
+
+  <button class="btn-secondary" onclick="resetProgress()" style="margin-bottom:8px">🗑 進捗をリセット</button>
+</div>
+```
+
+  </div>
+
+  <!-- Bottom Nav -->
+
+  <nav id="nav">
+    <button class="nav-item active" id="nav-home" onclick="navTo('home')">
+      <span class="nav-icon">🏠</span>ホーム
+    </button>
+    <button class="nav-item" id="nav-quiz" onclick="navTo('quiz-setup')">
+      <span class="nav-icon">📝</span>クイズ
+    </button>
+    <button class="nav-item" id="nav-flash" onclick="navTo('quiz-setup'); startFlash()">
+      <span class="nav-icon">🃏</span>カード
+    </button>
+    <button class="nav-item" id="nav-progress" onclick="navTo('progress')">
+      <span class="nav-icon">📊</span>進捗
+    </button>
+  </nav>
+</div>
+
+<script>
+const FLASHCARDS = {
+  理論: [
+    {front:"オームの法則",back:"V = IR\n電圧 = 電流 × 抵抗"},
+    {front:"キルヒホッフの電流則 (KCL)",back:"節点に流れ込む電流の和 = 流れ出す電流の和"},
+    {front:"キルヒホッフの電圧則 (KVL)",back:"閉回路における電圧降下の和 = 起電力の和\nΣV = 0"},
+    {front:"コンデンサのエネルギー",back:"W = ½CV²\nC: 静電容量, V: 電圧"},
+    {front:"有効電力",back:"P = VI cosθ [W]\ncosθ: 力率"},
+    {front:"無効電力",back:"Q = VI sinθ [var]\n進み: コンデンサ, 遅れ: インダクタ"},
+    {front:"皮相電力",back:"S = VI [VA]\nS² = P² + Q²"},
+    {front:"共振条件 (RLC直列)",back:"ωL = 1/ωC\n誘導性リアクタンス = 容量性リアクタンス"},
+  ],
+  電力: [
+    {front:"送電線の電力損失",back:"P_loss = I²R [W]\n高電圧送電で電流↓→損失↓"},
+    {front:"変圧器の変圧比",back:"V1/V2 = N1/N2 = I2/I1\nN: 巻数, V: 電圧, I: 電流"},
+    {front:"中性点接地方式",back:"直接接地／抵抗接地／リアクタンス接地\n消弧リアクタ接地／非接地"},
+    {front:"配電線の電圧降下",back:"ΔV ≈ IR cosθ + IX sinθ\nR: 抵抗, X: リアクタンス"},
+    {front:"電力系統の安定度",back:"静態安定度: 定常時\n動態安定度: 小擾乱\n過渡安定度: 大擾乱"},
+  ],
+  機械: [
+    {front:"誘導電動機の同期速度",back:"Ns = 120f/P [rpm]\nf: 周波数, P: 極数"},
+    {front:"すべり (slip)",back:"s = (Ns - N)/Ns\nNs: 同期速度, N: 実回転速度"},
+    {front:"直流電動機のトルク",back:"T = KΦI [N·m]\nK: 定数, Φ: 磁束, I: 電流"},
+    {front:"変圧器の最大効率条件",back:"鉄損 = 銅損\n（無負荷損 = 負荷損）"},
+    {front:"同期発電機の誘導起電力",back:"E = 4.44 × f × N × Φ × kw\nkw: 巻線係数"},
+  ],
+  法規: [
+    {front:"低圧の定義",back:"交流: 600V以下\n直流: 750V以下"},
+    {front:"高圧の定義",back:"交流: 600V超〜7000V以下\n直流: 750V超〜7000V以下"},
+    {front:"特別高圧の定義",back:"7000Vを超えるもの"},
+    {front:"電気主任技術者 第三種",back:"最大電力 5000kW未満\n電圧 50000V未満の事業用電気工作物"},
+    {front:"電気事業法の目的",back:"電気の使用者の利益保護と\n電気事業の健全な発達"},
+    {front:"電気工事士の種類",back:"第一種: すべての自家用電気工作物\n第二種: 一般用電気工作物"},
+  ],
+};
+
+const QUIZZES = {
+  理論: [
+    {q:"抵抗10Ωに5Aの電流が流れるときの電圧は？",options:["20V","50V","100V","500V"],answer:1,exp:"V = IR = 5 × 10 = 50V"},
+    {q:"コンデンサに蓄えられるエネルギーの正しい式は？",options:["W = CV","W = CV²","W = ½CV²","W = ½CV"],answer:2,exp:"コンデンサのエネルギー W = ½CV²（またはW = Q²/2C）"},
+    {q:"力率0.8、電圧100V、電流10Aの有効電力は？",options:["600W","800W","1000W","1250W"],answer:1,exp:"P = VI cosθ = 100 × 10 × 0.8 = 800W"},
+    {q:"RLC直列回路の共振条件は？",options:["ωL = 1/ωC","ωL > 1/ωC","R = ωL","R = 1/ωC"],answer:0,exp:"共振時は ωL = 1/ωC。インピーダンスは最小となり純抵抗Rのみ"},
+  ],
+  電力: [
+    {q:"送電電圧を2倍にすると電力損失は何倍？",options:["1/4倍","1/2倍","2倍","4倍"],answer:0,exp:"電圧2倍→電流1/2倍→P_loss = I²R は(1/2)² = 1/4倍"},
+    {q:"一次巻数200・二次巻数100の変圧器。一次100Vのとき二次電圧は？",options:["50V","100V","200V","400V"],answer:0,exp:"V2 = V1 × N2/N1 = 100 × 100/200 = 50V"},
+  ],
+  機械: [
+    {q:"60Hz・4極誘導電動機の同期速度は？",options:["900rpm","1200rpm","1500rpm","1800rpm"],answer:3,exp:"Ns = 120f/P = 120 × 60 / 4 = 1800rpm"},
+    {q:"すべり0.05・同期速度1500rpmのとき回転速度は？",options:["1425rpm","1450rpm","1475rpm","1500rpm"],answer:0,exp:"N = Ns(1-s) = 1500 × 0.95 = 1425rpm"},
+  ],
+  法規: [
+    {q:"交流の低圧の定義として正しいものは？",options:["300V以下","600V以下","750V以下","7000V以下"],answer:1,exp:"交流の低圧は600V以下（直流は750V以下）"},
+    {q:"第三種電気主任技術者が管理できる最大電圧は？",options:["600V","7000V","50000V","制限なし"],answer:2,exp:"第三種は最大電力5000kW未満、電圧50000V未満の電気工作物を管理"},
+  ],
+};
+
+let state = {
+  subject: '全科目',
+  quizQuestions: [],
+  quizIdx: 0,
+  quizScore: 0,
+  selected: null,
+  cards: [],
+  cardIdx: 0,
+  flipped: false,
+  progress: loadProgress(),
+  currentPage: 'home',
+  prevPage: null,
+};
+
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem('denken3_v2') || '{}'); }
+  catch { return {}; }
+}
+function saveProgress() {
+  try { localStorage.setItem('denken3_v2', JSON.stringify(state.progress)); } catch {}
+}
+
+function setSubject(s) { state.subject = s; }
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) { page.classList.add('active'); page.classList.remove('fade-in'); void page.offsetWidth; page.classList.add('fade-in'); }
+  state.prevPage = state.currentPage;
+  state.currentPage = id;
+
+  // Header back button
+  const backBtn = document.getElementById('header-back');
+  const noBack = ['home','progress'];
+  backBtn.style.display = noBack.includes(id) ? 'none' : 'flex';
+
+  // Update nav
+  ['home','quiz-setup','progress'].forEach(n => {
+    document.getElementById('nav-'+n)?.classList.remove('active');
+  });
+  if (id === 'home') document.getElementById('nav-home').classList.add('active');
+  else if (id === 'quiz-setup') document.getElementById('nav-quiz').classList.add('active');
+  else if (id === 'progress') { document.getElementById('nav-progress').classList.add('active'); renderProgress(); }
+
+  if (id === 'home') renderHome();
+  if (id === 'quiz-setup') {
+    document.getElementById('quiz-setup-title').textContent = state.subject === '全科目' ? '全科目クイズ' : state.subject + ' クイズ';
+  }
+}
+
+function navTo(id) {
+  if (id === 'quiz-setup') state.subject = '全科目';
+  showPage(id);
+}
+
+function goBack() {
+  const prev = state.prevPage || 'home';
+  showPage(prev);
+}
+
+function renderHome() {
+  const p = state.progress;
+  const total = Object.keys(p.correct || {}).length;
+  const correct = Object.values(p.correct || {}).filter(Boolean).length;
+  const acc = total > 0 ? Math.round(correct/total*100) : 0;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-acc').textContent = acc + '%';
+  document.getElementById('stat-sess').textContent = (p.sessions || []).length;
+}
+
+// QUIZ
+function startQuiz() {
+  const pool = state.subject === '全科目'
+    ? Object.entries(QUIZZES).flatMap(([s,qs]) => qs.map(q => ({...q, subject: s})))
+    : (QUIZZES[state.subject] || []).map(q => ({...q, subject: state.subject}));
+  state.quizQuestions = [...pool].sort(() => Math.random() - 0.5);
+  state.quizIdx = 0;
+  state.quizScore = 0;
+  state.selected = null;
+  renderQuizQuestion();
+  showPage('quiz');
+}
+
+function renderQuizQuestion() {
+  const q = state.quizQuestions[state.quizIdx];
+  if (!q) return;
+  const pct = (state.quizIdx / state.quizQuestions.length) * 100;
+  document.getElementById('quiz-progress-label').textContent = `問題 ${state.quizIdx+1} / ${state.quizQuestions.length}`;
+  document.getElementById('quiz-subject-tag').textContent = q.subject;
+  document.getElementById('quiz-prog-bar').style.width = pct + '%';
+  document.getElementById('quiz-question').textContent = q.q;
+  document.getElementById('quiz-explanation').style.display = 'none';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-label">${['A','B','C','D'][i]}.</span>${opt}`;
+    btn.onclick = () => answerQuiz(i);
+    opts.appendChild(btn);
+  });
+}
+
+function answerQuiz(i) {
+  if (state.selected !== null) return;
+  state.selected = i;
+  const q = state.quizQuestions[state.quizIdx];
+  const correct = i === q.answer;
+  if (correct) state.quizScore++;
+
+  // Color options
+  document.querySelectorAll('.option-btn').forEach((btn, idx) => {
+    if (idx === q.answer) btn.classList.add('correct');
+    else if (idx === i) btn.classList.add('wrong');
+    btn.onclick = null;
+  });
+
+  // Save progress
+  if (!state.progress.correct) state.progress.correct = {};
+  state.progress.correct[`${q.subject}_q${state.quizIdx}_${Date.now()}`] = correct;
+  saveProgress();
+
+  document.getElementById('quiz-explanation-text').textContent = q.exp;
+  document.getElementById('quiz-explanation').style.display = 'block';
+  const nextBtn = document.getElementById('quiz-next-btn');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = (state.quizIdx + 1 >= state.quizQuestions.length) ? '結果を見る 🎉' : '次の問題 →';
+}
+
+function nextQuestion() {
+  if (state.quizIdx + 1 >= state.quizQuestions.length) {
+    // Save session
+    if (!state.progress.sessions) state.progress.sessions = [];
+    state.progress.sessions.push({
+      date: new Date().toLocaleDateString('ja-JP'),
+      subject: state.subject,
+      score: state.quizScore,
+      total: state.quizQuestions.length,
+    });
+    if (state.progress.sessions.length > 30) state.progress.sessions = state.progress.sessions.slice(-30);
+    saveProgress();
+    showResult();
+  } else {
+    state.quizIdx++;
+    state.selected = null;
+    renderQuizQuestion();
+  }
+}
+
+function showResult() {
+  const score = state.quizScore;
+  const total = state.quizQuestions.length;
+  const pct = Math.round(score/total*100);
+  document.getElementById('result-emoji').textContent = pct >= 80 ? '🎉' : pct >= 60 ? '💪' : '📚';
+  document.getElementById('result-score').textContent = `${score} / ${total}`;
+  document.getElementById('result-pct').textContent = pct + '%';
+  document.getElementById('result-label').textContent =
+    pct >= 80 ? '素晴らしい！合格ライン突破です！' :
+    pct >= 60 ? 'もう少し！復習して再挑戦を！' : '基礎からしっかり学習しましょう';
+  showPage('quiz-result');
+}
+
+// FLASH
+function startFlash() {
+  const pool = state.subject === '全科目'
+    ? Object.values(FLASHCARDS).flat()
+    : (FLASHCARDS[state.subject] || []);
+  state.cards = [...pool].sort(() => Math.random() - 0.5);
+  state.cardIdx = 0;
+  state.flipped = false;
+  renderCard();
+  showPage('flash');
+}
+
+function renderCard() {
+  const c = state.cards[state.cardIdx];
+  if (!c) return;
+  const pct = (state.cardIdx / state.cards.length) * 100;
+  document.getElementById('flash-progress-label').textContent = `${state.cardIdx+1} / ${state.cards.length}`;
+  document.getElementById('flash-prog-bar').style.width = pct + '%';
+  document.getElementById('flash-front').textContent = c.front;
+  document.getElementById('flash-back').textContent = c.back;
+  document.getElementById('flip-inner').classList.remove('flipped');
+  state.flipped = false;
+}
+
+function flipCard() {
+  state.flipped = !state.flipped;
+  document.getElementById('flip-inner').classList.toggle('flipped', state.flipped);
+}
+
+function prevCard() {
+  if (state.cardIdx > 0) { state.cardIdx--; renderCard(); }
+}
+
+function nextCard() {
+  if (state.cardIdx + 1 >= state.cards.length) state.cardIdx = 0;
+  else state.cardIdx++;
+  renderCard();
+}
+
+// PROGRESS
+function renderProgress() {
+  const p = state.progress;
+  const total = Object.keys(p.correct || {}).length;
+  const correct = Object.values(p.correct || {}).filter(Boolean).length;
+  const acc = total > 0 ? Math.round(correct/total*100) : 0;
+  document.getElementById('prog-total').textContent = total;
+  document.getElementById('prog-correct').textContent = correct;
+  document.getElementById('prog-acc').textContent = acc + '%';
+
+  // Subject progress
+  const sp = document.getElementById('subj-progress');
+  sp.innerHTML = '';
+  Object.entries(QUIZZES).forEach(([subj, qs]) => {
+    const done = Object.keys(p.correct||{}).filter(k => k.startsWith(subj)).length;
+    const pct = Math.min(100, Math.round(done / Math.max(qs.length,1) * 100));
+    sp.innerHTML += `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="color:var(--gold);font-size:14px;font-weight:600">${subj}</span>
+          <span style="color:var(--muted);font-size:12px">${done}問解答 / ${pct}%</span>
+        </div>
+        <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+      </div>`;
+  });
+
+  // History
+  const hist = document.getElementById('history-list');
+  const sessions = (p.sessions || []).slice(-10).reverse();
+  if (!sessions.length) {
+    hist.innerHTML = '<div style="color:var(--muted);font-size:14px">まだ記録がありません</div>';
+    return;
+  }
+  hist.innerHTML = sessions.map(s => {
+    const pct = Math.round(s.score/s.total*100);
+    const cls = pct >= 80 ? 'good' : pct >= 60 ? 'ok' : 'bad';
+    return `<div class="hist-row">
+      <div><div style="font-size:14px">${s.subject}</div><div class="hist-info">${s.date}</div></div>
+      <div class="hist-score ${cls}">${s.score}/${s.total} (${pct}%)</div>
+    </div>`;
+  }).join('');
+}
+
+function resetProgress() {
+  if (confirm('進捗をすべてリセットしますか？')) {
+    state.progress = {};
+    saveProgress();
+    renderProgress();
+    renderHome();
+  }
+}
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Init
+renderHome();
+</script>
+
+</body>
+</html>
