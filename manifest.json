@@ -1,0 +1,18 @@
+{
+“name”: “電験三種 学習アプリ”,
+“short_name”: “電験三種”,
+“description”: “電験三種の過去問・フラッシュカード・進捗管理”,
+“start_url”: “.”,
+“display”: “standalone”,
+“background_color”: “#0a0c12”,
+“theme_color”: “#0a0c12”,
+“orientation”: “portrait”,
+“icons”: [
+{
+“src”: “icon.svg”,
+“sizes”: “any”,
+“type”: “image/svg+xml”,
+“purpose”: “any maskable”
+}
+]
+}
